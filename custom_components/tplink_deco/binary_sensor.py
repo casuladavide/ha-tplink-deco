@@ -8,7 +8,6 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTR_SSID
 from .const import COORDINATOR_DECOS_KEY
 from .const import COORDINATOR_WIRELESS_KEY
 from .const import DOMAIN
@@ -19,6 +18,7 @@ from .device import create_device_info
 from .wireless import TplinkDecoWirelessUpdateCoordinator
 from .wireless import WIRELESS_NETWORKS
 from .wireless import WirelessNetworkDescription
+from .wireless import wireless_ssid_attributes
 
 
 async def async_setup_entry(
@@ -218,9 +218,12 @@ class TplinkDecoWirelessBinarySensor(CoordinatorEntity, BinarySensorEntity):
         return self.coordinator.data.get(self.entity_description.key)
 
     @property
-    def extra_state_attributes(self) -> dict[str, str | None]:
-        """Return the network name."""
-        return {ATTR_SSID: self.coordinator.ssids.get(self.entity_description.key)}
+    def extra_state_attributes(self) -> dict[str, str] | None:
+        """Return the network name when exposing names is enabled."""
+        names = self.coordinator.ssids.get(self.entity_description.key)
+        if not names:
+            return None
+        return wireless_ssid_attributes(names)
 
     @property
     def device_info(self) -> DeviceInfo:
